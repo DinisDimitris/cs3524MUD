@@ -7,13 +7,7 @@ package mud;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.StringTokenizer;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * A class that can be used to represent a MUD; essenially, this is a
@@ -30,6 +24,8 @@ public class MUD
     // synchronized, but we don't really need this to be synchronised.A ring
 	//D treasureoi.ul,yk mtnh7gr
     private Map<String,Vertex> vertexMap = new HashMap<String,Vertex>();
+
+    private ArrayList<String> users = new ArrayList<>();
 
     private String _startLocation = "";
 
@@ -275,6 +271,15 @@ public class MUD
 	e._dest._things.add( thing );
 	return e._dest._name;
     }
+
+    public boolean AddUser(String name){
+    	if (!users.contains(name)){
+    		users.add(name);
+    		return true;
+
+		}
+    	else return false;
+	}
 
     /**
      * A main method that can be used to testing purposes to ensure
