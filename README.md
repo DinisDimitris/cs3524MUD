@@ -13,3 +13,5 @@ port1 is where rmiregistry registers the remote objects
 port2 is server listener port
 port3 is client callback port
 
+feel free to edit anything especially my dog shit user input format
+
