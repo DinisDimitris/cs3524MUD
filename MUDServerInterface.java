@@ -8,4 +8,6 @@ public interface MUDServerInterface extends Remote {
     String getStartLocation(String MUDName) throws  RemoteException;
     String showServers() throws RemoteException;
     int addPlayer(String name, String mudInstance) throws RemoteException;
+    String getSummary(String MUDName) throws RemoteException;
+    String moveThing(String MUDName,String location, String dir,String thing) throws RemoteException;
 }

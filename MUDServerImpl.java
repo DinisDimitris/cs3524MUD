@@ -39,9 +39,9 @@ public class MUDServerImpl implements MUDServerInterface{
             return false;
         }
 
-        for(int i = countGames; i < numberofgames; i++){
+        for(int i =0 ; i <  numberofgames; i++){
+            intializeGame("MUD" + countGames);
             countGames++;
-            intializeGame("MUD" + i);
 
         }
         return true;
@@ -50,6 +50,16 @@ public class MUDServerImpl implements MUDServerInterface{
     public String getStartLocation(String MUDName) throws  RemoteException{
         MUD currentGame = mudGames.get(MUDName);
         return currentGame.startLocation();
+    }
+
+    public String getSummary(String MUDName) throws RemoteException{
+        MUD currentGame = mudGames.get(MUDName);
+        return currentGame.toString();
+    }
+
+    public String moveThing(String MUDName,String location, String dir,String thing) throws RemoteException{
+        MUD currentGame = mudGames.get(MUDName);
+        return currentGame.moveThing(location,dir,thing);
     }
 
     public String showServers() throws RemoteException{

@@ -278,7 +278,7 @@ public class MUD
     		return true;
 
 		}
-    	else return false;
+    	return false;
 	}
 
     /**
