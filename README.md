@@ -1,5 +1,6 @@
 # cs3524MUD
 
+Make with: make cs3524mud
 
 Instructions to run
 
@@ -12,6 +13,3 @@ terminal 3: mud/MUDClient hostname port1 port3
 port1 is where rmiregistry registers the remote objects
 port2 is server listener port
 port3 is client callback port
-
-feel free to edit anything especially my dog shit user input format
-
