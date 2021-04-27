@@ -8,7 +8,7 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
+
 /**
  * A class that can be used to represent a MUD; essenially, this is a
  * graph.
@@ -26,6 +26,10 @@ public class MUD
     private Map<String,Vertex> vertexMap = new HashMap<String,Vertex>();
 
     private ArrayList<User> users = new ArrayList<>();
+
+    private int maxUsers = 5;
+
+    private int currentUsers = 0;
 
     private String _startLocation = "";
 
@@ -267,11 +271,12 @@ public class MUD
 		// add item to user items
 		else{
 		for (User user: users) {
-			if (user.getName().equals(username))
+			if (user.getName().equals(username)) {
 
 				v._things.remove(item);
-			user.addItem(item);
-			return true;
+				user.addItem(item);
+				return true;
+			}
 		}
 		}
 
@@ -281,7 +286,7 @@ public class MUD
 	public String showItems(String username) {
 		for (User user : users) {
 			if (user.getName().equals(username)) {
-				return "Inventory: " + user.getItems().toString();
+				return "\nInventory: " + user.getItems().toString();
 			}
 
 		}
@@ -305,27 +310,31 @@ public class MUD
 	return e._dest._name;
     }
 
-    public boolean AddUser(String name){
+    public int AddUser(String name){
+    	if ( maxUsers < currentUsers + 1){
+    		return 0;
+		}
 		for (User user : users) {
 			if (user.getName().equals(name))
-				return false;
+				return 1;
 
 		}
 		User n = new User(name,true);
 		users.add(n);
 		getVertex(startLocation())._players.add(n.getName());
-    	return true;
+		currentUsers++;
+    	return 2;
 	}
 
 	public boolean removeUser(String name,String location){
+    	Vertex userLocation = getVertex(location);
     	for (User user: users) {
 			if (user.getName().equals(name)) {
 				users.remove(user);
-				user = null;
-				getVertex(location)._players.remove(name);
 				// drop all items left by the user in the location
-				for (String item : user.getItems())getVertex(location)._things.add(item);
-
+				userLocation._things.addAll(user.getItems());
+				userLocation._players.remove(name);
+				user = null;
 
 
 				return true;
@@ -336,13 +345,8 @@ public class MUD
 	}
 
 	// get users from mud
-	public ArrayList<String> getUsers(){
-    	ArrayList<String> usersToString = new ArrayList<>();
-    	for (User user: users){
-    		usersToString.add(user.getName());
-		}
-
-    	return usersToString;
+	public ArrayList<User> getUsers(){
+		return users;
 	}
 
 

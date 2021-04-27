@@ -1,7 +1,6 @@
 package mud;
 
 import java.io.BufferedReader;
-import java.util.List;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -17,21 +16,45 @@ public class MUDClient {
     private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
     private static MUDServerInterface server = null;
     private static MUDClientInterface client = null;
-    private static String playerPos = null;
     private static String playerName = null;
 
+    private static String gameJoined = null;
+    private static String location;
+
     public static void main(String[] args) {
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                if (playerName == null) {
+                    System.out.println("exiting server...");
+                }
+                try {
+                    // user is in a mud , delete him and drop all items
+                    if (gameJoined != null) {
+                        server.removeUser(gameJoined, playerName, location);
+                    }
+                    // player not in a game but still in a server
+                    else {
+                        playerName = null;
+                    }
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         if (args.length < 3) {
-            System.err.println("Usage:\njava MUDClient <host> <port> <callbackport>") ;
+            System.err.println("Usage:\njava MUDClient <host> <port> <callbackport>");
         }
 
         String hostname = args[0];
         int port = Integer.parseInt(args[1]);
-        int callbackPort = Integer.parseInt(args[2]) ;
+        int callbackPort = Integer.parseInt(args[2]);
 
 
-        System.setProperty("java.security.policy", "security.policy") ;
-        System.setSecurityManager(new SecurityManager()) ;
+        System.setProperty("java.security.policy", "security.policy");
+        System.setSecurityManager(new SecurityManager());
 
         try {
             // create client Instance and export it
@@ -42,23 +65,24 @@ public class MUDClient {
             String regURL = "rmi://" + hostname + ":" + port + "/MUDServer";
             System.out.println("Looking up " + regURL + '\n');
             server = (MUDServerInterface) Naming.lookup(regURL);
-
             System.out.println("Connection Established!");
+
             initialize();
 
-        }
-
-        catch (RemoteException | MalformedURLException | NotBoundException e) {
+        } catch (RemoteException | MalformedURLException | NotBoundException e) {
             e.printStackTrace();
         }
 
+
     }
 
-    private static void initialize()  {
-        System.out.println("Enter username:");
+
+    private static void initialize() throws RemoteException {
+        System.out.print("Enter username: ");
         playerName = handleInput();
-        String gameJoined = "";
-        System.out.println("Welcome to the MUD Server " + playerName + "!\n");
+        // add client for callback
+        server.addClient(playerName,client);
+        System.out.println("\nWelcome to the MUD Server " + playerName + "!\n");
         try {
             while (true) {
                 helpMenu();
@@ -90,13 +114,12 @@ public class MUDClient {
 
     private static void reinitialize(String playerName){
         try {
-            String gameJoined = "";
             while (true) {
                 helpMenu();
                 String s = handleInput();
                 assert s != null;
                 if (s.equals("create")){
-                    System.out.println("Enter number of servers\n");
+                    System.out.print("Enter number of servers\n");
                     s = handleInput();
                     boolean isCreated = server.createMUDs(Integer.parseInt(s));
                     if(isCreated) System.out.println(s + " mud games have been created!\n");
@@ -120,7 +143,7 @@ public class MUDClient {
     }
 
     private static void playGame(String gameName,String userName) throws RemoteException {
-        String location = server.getStartLocation(gameName);
+        location = server.getStartLocation(gameName);
         System.out.println("\nWelcome to " + gameName + " " + userName + "!\n");
         String summary = server.getSummary(gameName);
         System.out.println(summary);
@@ -148,6 +171,19 @@ public class MUDClient {
                     System.out.println(server.showUserItems(gameName,userName));
                 }
 
+                else if (decision ==  5){
+                    System.out.println(server.showUsers(gameName));
+                }
+
+                else if (decision == 6){
+                    System.out.print("Enter message: ");
+                    String message = handleInput();
+                    System.out.println(server.showUsers(gameName));
+                    System.out.print("\nEnter recipient: ");
+                    String recipient = handleInput();
+                    System.out.println(server.sendMessageTo(userName, recipient, message));
+                }
+
                 else if (decision == 0 ){
                     System.out.println(server.removeUser(gameName,userName,location));
                     System.out.println("Go back to menu? -> 1 Quit? -> 0");
@@ -173,7 +209,7 @@ public class MUDClient {
         try{
             System.out.println("\n:::Commands:::\n");
             System.out.println("Enter to see location info\nmove -> move\npick -> pick up item \nexit -> exit server" +
-                    "\ninventory-> show inventory\nplayers-> show current players in the server");
+                    "\ninventory-> show inventory\nplayers-> show current players in the server\nmessage -> send message to a player");
             // check for special characters
             Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
             String in = reader.readLine().trim();
@@ -198,6 +234,10 @@ public class MUDClient {
 
             else if (in.equals("players")){
                 return 5;
+            }
+
+            else if (in.equals("message")){
+                return 6;
             }
 
             else if(in.equals("exit")){
@@ -300,11 +340,17 @@ public class MUDClient {
                 System.out.println("User " + playerName + " already exists in the server\n");
                 return joinGame();
             }
-            // game not found , try joining again
-            else {
+            // server full
+            else if (userAdded == -1){
+                System.out.println("Server is full\n");
+                return joinGame();
+            }
+
+            else{
                 System.out.println(game + " not found\n");
                 return joinGame();
             }
+
 
         }
         catch (IOException e ){

@@ -1,20 +1,20 @@
 package mud;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class MUDServerImpl implements MUDServerInterface{
     private static Hashtable<String, MUD> mudGames = new Hashtable<>();
 
     private int maxGames = 5;
 
-
+    private static Map<String, MUDClientInterface> clientCallbacks = new HashMap<>();
     // keep track of games
     private static int countGames = 0;
 
 
+    public void addClient(String clientName, MUDClientInterface client) throws RemoteException{
+        clientCallbacks.put(clientName,client);
+    }
     @Override
     public Boolean intializeGame(String GameName)   {
         try {
@@ -50,7 +50,12 @@ public class MUDServerImpl implements MUDServerInterface{
 
     public String showUsers(String MUDNamme) throws  RemoteException{
         MUD currentGame = mudGames.get(MUDNamme);
-        return currentGame.getUsers().toString();
+        String usersToString = "\nPlayers in this mud: \n";
+        ArrayList<User> users = currentGame.getUsers();
+        for ( int i = 0 ; i < users.size(); i++){
+            usersToString += "\n->" + users.get(i).getName() + "\n";
+        }
+        return usersToString;
     }
     public String getStartLocation(String MUDName) throws  RemoteException{
         MUD currentGame = mudGames.get(MUDName);
@@ -69,9 +74,21 @@ public class MUDServerImpl implements MUDServerInterface{
 
     public String pickItem(String MUDName, String location, String username,String item) throws RemoteException{
         MUD currentGame = mudGames.get(MUDName);
-        if (currentGame.pickItem(location,username,item) ) return "\nYou have picked up: " + item;
+        if (currentGame.pickItem(location,username,item) ){
 
-        else return "\nThere is no " + item + " in your location";
+                // send callback message to active clients in current MUD
+                for (User activeUser: currentGame.getUsers()){
+                    for (Map.Entry<String, MUDClientInterface> pair : clientCallbacks.entrySet()){
+                        if (activeUser.getName().equals(pair.getKey())){
+                            pair.getValue().receiveMessage("\n" + username + " has picked up " + item);
+
+                        }
+                }
+            }
+            return "\nYou have picked up: " + item + "\n";
+        }
+
+        else return "\nThere is no " + item + " in your location\n";
     }
 
     public String showUserItems(String MUDName, String user) throws RemoteException{
@@ -80,7 +97,28 @@ public class MUDServerImpl implements MUDServerInterface{
     }
     public String moveThing(String MUDName,String location, String dir,String thing) throws RemoteException{
         MUD currentGame = mudGames.get(MUDName);
+        for (User activeUser : currentGame.getUsers()) {
+            for (Map.Entry<String, MUDClientInterface> pair : clientCallbacks.entrySet()) {
+                if (activeUser.getName().equals(pair.getKey())) {
+                    pair.getValue().receiveMessage("\n" + thing + " has moved from " + location + " towards" + dir+ "\n");
+
+                }
+
+            }
+
+        }
         return currentGame.moveThing(location,dir,thing);
+    }
+
+    public String sendMessageTo(String sender, String recipient,String message) throws RemoteException{
+        if ( sender.equals(recipient)) return "Cannot send message to yourself";
+        for (Map.Entry<String ,MUDClientInterface> pair : clientCallbacks.entrySet()){
+            if ( pair.getKey().equals(recipient)){
+                pair.getValue().receiveMessage("\nmessage from " + sender + " : " + message + "\n");
+                return "\nMessage sent\n";
+            }
+        }
+        return "\nRecipient not found\n";
     }
 
 
@@ -97,26 +135,60 @@ public class MUDServerImpl implements MUDServerInterface{
     }
 
     public int addPlayer(String name, String mudInstance) throws RemoteException{
-            for (String key : mudGames.keySet()) {
-                if (mudInstance.equals(key)) {
-                    MUD mudGame = mudGames.get(key);
-                    boolean added = mudGame.AddUser(name);
+                    MUD currentGame = mudGames.get(mudInstance);
+                    if (currentGame == null) return -2;
+                    int added = currentGame.AddUser(name);
 
-                    // user added
-                    if (added) return 1;
+                    // user added , send callback
+                    if (added == 2) {
+                        for (User activeUser : currentGame.getUsers()) {
+                            for (Map.Entry<String, MUDClientInterface> pair : clientCallbacks.entrySet()) {
+                                if (activeUser.getName().equals(pair.getKey())) {
+                                    pair.getValue().receiveMessage("\n" + name + " has entered the server");
+                                }
+                            }
+                        }
+                        return 1;
+                    }
                     // user already exists
-                    else return 0;
+                    else if (added == 1)return 0;
 
+                    // max capacity exceeded
+                    else if ( added == 0) return -1;
+
+                    return -2;
                 }
-            }
-            // mud game not found
-            return -1;
-    }
+
+
     public String removeUser(String MUDName, String user, String location) throws RemoteException{
         MUD mudGame = mudGames.get(MUDName);
-        if (mudGame.removeUser(user,location)) return "User " + user + " has left " + MUDName ;
+        if (mudGame.removeUser(user,location)) {
+
+            // user exits , send callback
+            for (User activeUser : mudGame.getUsers()) {
+                for (Map.Entry<String, MUDClientInterface> pair : clientCallbacks.entrySet()) {
+                    if (activeUser.getName().equals(pair.getKey())) {
+                        pair.getValue().receiveMessage("\n" + user + " has left the server");
+
+                    }
+
+                }
+
+            }
+            return "User " + user + " has left " + MUDName;
+        }
 
         else return "User not found";
 
+    }
+
+    // find player in the servers in case of CTRL C shutdown
+    public MUD findPlayer(String name) throws  RemoteException{
+        for (Map.Entry<String,MUD> mudGame : mudGames.entrySet()){
+            for (User users: mudGame.getValue().getUsers()){
+                if (users.getName().equals(name)) return mudGame.getValue();
+            }
+        }
+        return null;
     }
 }

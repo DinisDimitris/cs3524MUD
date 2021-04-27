@@ -3,3 +3,8 @@ modificaitons:
 User is now a class
 Vertex contains two arrays , items and players instead of things
 
+
+
+
+Callbacks on: JOIN , PICK, EXIT
+
