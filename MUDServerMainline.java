@@ -32,7 +32,7 @@ public class MUDServerMainline {
 
             Naming.rebind(regURL, mudStub);
             //initialize one mud
-            mudServer.createMUDs(1);
+            mudServer.createMUDs(4);
 
         }
 

@@ -18,14 +18,16 @@ class Vertex
     public Map<String,Edge> _routes; // Association between direction
 				     // (e.g. "north") and a path
 				     // (Edge)
-    public List<String> _things;     // The things (e.g. players) at
+    public List<String> _things;     // The things  at
 				     // this location
+	public List<String> _players; //players
 
     public Vertex( String nm )
     {
 	_name = nm; 
 	_routes = new HashMap<String,Edge>(); // Not synchronised
 	_things = new Vector<String>();       // Synchronised
+	_players = new Vector<String>(); // synchronised
     }
 
     public String toString()
@@ -40,13 +42,20 @@ class Vertex
 	}
 	iter = _things.iterator();
 	if (iter.hasNext()) {
-	    summary += "You can see: ";
-	    do {
-		summary += iter.next() + " ";
-	    } while (iter.hasNext());
-	}
+		summary += "Things You can see: ";
+		do {
+			summary += iter.next() + " ";
+			} while (iter.hasNext());
+		}
 	summary += "\n\n";
 	return summary;
     }
+
+    public String showPlayers(){
+    	String summary = "\n";
+    	summary += "Players you can see: ";
+    	summary += _players.toString();
+    	return summary;
+	}
 }
 

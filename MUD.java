@@ -8,7 +8,7 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
-
+import java.util.List;
 /**
  * A class that can be used to represent a MUD; essenially, this is a
  * graph.
@@ -25,9 +25,10 @@ public class MUD
 	//D treasureoi.ul,yk mtnh7gr
     private Map<String,Vertex> vertexMap = new HashMap<String,Vertex>();
 
-    private ArrayList<String> users = new ArrayList<>();
+    private ArrayList<User> users = new ArrayList<>();
 
     private String _startLocation = "";
+
 
     /**
      * Add a new edge to the graph.
@@ -60,6 +61,7 @@ public class MUD
 	Vertex v = getOrCreateVertex( loc );
 	v._msg = msg;
     }
+
 
     /**
      * If vertexName is not present, add it to vertexMap.  In either
@@ -225,7 +227,7 @@ public class MUD
      */
     public String locationInfo( String loc )
     {
-	return getVertex( loc ).toString();
+	return getVertex( loc ).toString() + "\nThings: " + getVertex(loc)._things.toString() + "\n" + getVertex(loc).showPlayers();
     }
 
     /**
@@ -236,25 +238,56 @@ public class MUD
 	return _startLocation;
     }
 
-    /**
-     * Add a thing to a location; used to enable us to add new users.
-     */
-    public void addThing( String loc,
-			  String thing )
-    {
-	Vertex v = getVertex( loc );
-	v._things.add( thing );
-    }
+	/**
+	 * Add a thing to a location; used to enable us to add new users.
+	 */
+	public void addThing( String loc,
+						   String thing )
+	{
+		Vertex v = getVertex( loc );
+		v._things.add( thing );
+	}
 
-    /**
-     * Remove a thing from a location.
-     */
-    public void delThing( String loc, 
-			  String thing )
-    {
-	Vertex v = getVertex( loc );
-	v._things.remove( thing );
-    }
+	/**
+	 * Remove a thing from a location.
+	 */
+	public void delThing( String loc,
+						   String thing )
+	{
+		Vertex v = getVertex( loc );
+		v._things.remove( thing );
+	}
+
+	public boolean pickItem(String loc, String username, String item){
+		Vertex v = getVertex(loc);
+		boolean removed = v._things.remove(item);
+		// item not found
+		if (!removed ) return false;
+
+		// add item to user items
+		else{
+		for (User user: users) {
+			if (user.getName().equals(username))
+
+				v._things.remove(item);
+			user.addItem(item);
+			return true;
+		}
+		}
+
+		return false;
+	}
+
+	public String showItems(String username) {
+		for (User user : users) {
+			if (user.getName().equals(username)) {
+				return "Inventory: " + user.getItems().toString();
+			}
+
+		}
+		return null;
+	}
+
 
     /**
      * A method to enable a player to move through the MUD (a player
@@ -267,19 +300,51 @@ public class MUD
 	Edge e = v._routes.get( dir );
 	if (e == null)   // if there is no route in that direction
 	    return loc;  // no move is made; return current location.
-	v._things.remove( thing );
-	e._dest._things.add( thing );
+	v._players.remove( thing );
+	e._dest._players.add( thing );
 	return e._dest._name;
     }
 
     public boolean AddUser(String name){
-    	if (!users.contains(name)){
-    		users.add(name);
-    		return true;
+		for (User user : users) {
+			if (user.getName().equals(name))
+				return false;
 
 		}
+		User n = new User(name,true);
+		users.add(n);
+		getVertex(startLocation())._players.add(n.getName());
+    	return true;
+	}
+
+	public boolean removeUser(String name,String location){
+    	for (User user: users) {
+			if (user.getName().equals(name)) {
+				users.remove(user);
+				user = null;
+				getVertex(location)._players.remove(name);
+				// drop all items left by the user in the location
+				for (String item : user.getItems())getVertex(location)._things.add(item);
+
+
+
+				return true;
+			}
+		}
+    	//user not found
     	return false;
 	}
+
+	// get users from mud
+	public ArrayList<String> getUsers(){
+    	ArrayList<String> usersToString = new ArrayList<>();
+    	for (User user: users){
+    		usersToString.add(user.getName());
+		}
+
+    	return usersToString;
+	}
+
 
     /**
      * A main method that can be used to testing purposes to ensure

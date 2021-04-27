@@ -1,6 +1,7 @@
 package mud;
 
 import java.io.BufferedReader;
+import java.util.List;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -76,8 +77,39 @@ public class MUDClient {
                 }
             }
 
-        System.out.println(gameJoined);
+        System.out.println("Current users: " +  server.showUsers(gameJoined));
         playGame(gameJoined,playerName);
+
+
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private static void reinitialize(String playerName){
+        try {
+            String gameJoined = "";
+            while (true) {
+                helpMenu();
+                String s = handleInput();
+                assert s != null;
+                if (s.equals("create")){
+                    System.out.println("Enter number of servers\n");
+                    s = handleInput();
+                    boolean isCreated = server.createMUDs(Integer.parseInt(s));
+                    if(isCreated) System.out.println(s + " mud games have been created!\n");
+                    else System.out.println("Servers exceed game limit\n");
+                }
+                else if (s.equals("join")) {
+                    gameJoined = joinGame();
+                    break;
+                }
+            }
+
+            System.out.println("Current users: " +  server.showUsers(gameJoined));
+            playGame(gameJoined,playerName);
 
 
         }
@@ -95,16 +127,100 @@ public class MUDClient {
 
         System.out.println("\nYour current location is " + location);
 
-        while (true) {
-            String direction = handleGameInput();
-            location = server.moveThing(gameName, location, direction, userName);
+        try {
+            while (true) {
+                int decision = handleGameInput();
+                if (decision == 1) {
+                    String direction = handleDirection();
+                    location = server.moveThing(gameName, location, direction, userName);
 
-            System.out.println("\nYour current location is " + location);
+                    System.out.println("\nYour current location is " + location);
+                }
+                else if (decision == 2){
+                    System.out.println("What item do you want to pick?");
+                    String item = handleInput();
+                    System.out.println(server.pickItem(gameName,location,userName,item));
+                }
+                else if (decision == 3){
+                    System.out.println(server.showLocation(gameName,location));
+                }
+                else if (decision == 4){
+                    System.out.println(server.showUserItems(gameName,userName));
+                }
+
+                else if (decision == 0 ){
+                    System.out.println(server.removeUser(gameName,userName,location));
+                    System.out.println("Go back to menu? -> 1 Quit? -> 0");
+                    String s = handleInput();
+
+                    //TODO delete user from the whole server, add logged boolean
+                    assert s != null;
+                    if ( s.equals("0")) System.exit(1);
+
+                    // start from menu again, save user name
+                    else if (s.equals("1")) reinitialize(playerName);
+                }
+            }
+
         }
 
+        catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
-    private static String handleGameInput(){
+    private static int handleGameInput(){
+        try{
+            System.out.println("\n:::Commands:::\n");
+            System.out.println("Enter to see location info\nmove -> move\npick -> pick up item \nexit -> exit server" +
+                    "\ninventory-> show inventory\nplayers-> show current players in the server");
+            // check for special characters
+            Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
+            String in = reader.readLine().trim();
+            Matcher m = p.matcher(in);
+            boolean notvalid = m.find();
+
+            if (in.equals("move")){
+                return 1;
+            }
+
+            else if(in.equals("pick")){
+                return 2;
+            }
+
+            else if(in.equals("")){
+                return 3;
+            }
+
+            else if (in.equals("inventory")){
+                return 4;
+            }
+
+            else if (in.equals("players")){
+                return 5;
+            }
+
+            else if(in.equals("exit")){
+                return 0;
+            }
+
+            else if(notvalid){
+                System.out.println("Special characters are not allowed.\n");
+                return handleGameInput();
+            }
+            else{
+                System.out.println("Invalid input\n");
+                return handleGameInput();
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return -1;
+    }
+    private static String handleDirection(){
         try{
             System.out.println("\nEnter direction: north,east,south,west:\n");
             // check for special characters
@@ -175,8 +291,6 @@ public class MUDClient {
             String game = reader.readLine();
             int userAdded = server.addPlayer(playerName, game);
 
-
-            //TODO can change this so that we check for user duplicates when entering username
             if (userAdded == 1) {
                 System.out.println("You have joined " + game);
                 return game;
