@@ -230,8 +230,18 @@ public class MUD
      * A method to provide a string describing a particular location.
      */
     public String locationInfo( String loc )
-    {
-	return getVertex( loc ).toString() + getVertex(loc).showPlayers();
+		{
+			return getVertex( loc ).toString();
+    }
+
+		public String locationPlayers( String loc )
+		{
+			return getVertex( loc ).showPlayers();
+    }
+
+		public String locationItems( String loc )
+		{
+			return getVertex( loc ).showItems();
     }
 
     /**
@@ -239,7 +249,7 @@ public class MUD
      */
     public String startLocation()
     {
-	return _startLocation;
+			return _startLocation;
     }
 
 	/**
@@ -286,7 +296,12 @@ public class MUD
 	public String showItems(String username) {
 		for (User user : users) {
 			if (user.getName().equals(username)) {
-				return "\nInventory: " + user.getItems().toString();
+				String inv = "Inventory: ";
+				for (String item : user.getItems()) 
+				{ 
+					inv += item + " ";
+				}
+				return inv;
 			}
 
 		}

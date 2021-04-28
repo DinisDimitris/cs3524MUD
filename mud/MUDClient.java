@@ -30,7 +30,7 @@ public class MUDClient {
                     System.out.println("exiting server...");
                 }
                 try {
-                    // user is in a mud , delete user and drop all items
+                    // user is in a mud, delete user and drop all items
                     if (gameJoined != null) {
                         server.removeUser(gameJoined, playerName, location);
                     }
@@ -64,8 +64,7 @@ public class MUDClient {
             String regURL = "rmi://" + hostname + ":" + port + "/MUDServer";
             System.out.println("Looking up " + regURL);
             server = (MUDServerInterface) Naming.lookup(regURL);
-            clear();
-            System.out.println("\nConnection to " + regURL + " established!");
+            System.out.println("Connection established!");
 
             initialize();
 
@@ -83,8 +82,9 @@ public class MUDClient {
     }
     
     private static void helpMenu() {
+        System.out.print("\033[H\033[2J");  
+        System.out.flush();
         try {
-            clear();
             System.out.println("\nWelcome to the MUD Server, " + playerName + "!");
             System.out.println(server.showServers());
         }
@@ -171,130 +171,67 @@ public class MUDClient {
 
     private static void playGame(String gameName,String userName) throws RemoteException {
         location = server.getStartLocation(gameName);
-        try {
-            String response = "";
-            while (true) {
-                clear();
-                System.out.println("\nWelcome to " + gameName + ", " + userName + "!");
-                System.out.println(server.showUsers(gameName));
-                System.out.println(server.showLocation(gameName,location));
-                System.out.println(response);
-
-
-                int decision = handleGameInput();
-                if (decision == 1) {
-                    String direction = handleDirection();
-                    location = server.moveThing(gameName, location, direction, userName);
+        String response = "";
+        while (true) {
+            System.out.print("\033[H\033[2J");  
+            System.out.flush();
+            System.out.println("------------------------------------------------");
+            System.out.println("Welcome to " + gameName + ", " + userName + "!");
+            System.out.println("------------------------------------------------");
+            System.out.println(server.showLocation(gameName,location));
+            System.out.println("Commands:");
+            System.out.println("move [north/south/east/west] -> move in direction\ntake [item name] -> take item\nmsg [player name] [message]" +
+                        " -> send message to a player\nitems -> show items at your location\nplayers -> show players at your location" + 
+                        "\ninventory -> show inventory\nexit -> exit the game\n");
+            System.out.println(response);
+            System.out.print("Enter command: ");
+            String s = handleInput();
+            if (s == null) {
+                response = "Invalid input - special characters are not allowed.";
+            }
+            else if (s.contains(" ")) {
+                String[] w = s.split(" ");
+                if (w[0].equals("move")) {
+                    if (w[1].equals("north") | w[1].equals("south") | w[1].equals("east") | w[1].equals("west")) {
+                        location = server.moveThing(gameName, location, w[1], userName);
+                        response = "";
+                    }
+                    else {
+                        response = "Invalid direction. Please enter north, south, east or west.";
+                    }
                 }
-                else if (decision == 2){
-                    System.out.println("What item do you want to pick?");
-                    String item = handleInput();
-                    System.out.println(server.pickItem(gameName,location,userName,item));
+                else if (w[0].equals("take")) {
+                    response = server.pickItem(gameName,location,userName,w[1]);
                 }
-                else if (decision == 3){
-                    System.out.println(server.showLocation(gameName,location));
+                else if (w[0].equals("msg") & w.length >= 3) {
+                    String msg = "";
+                    for (int i = 2; i < w.length; i++) {
+                        msg += w[i] + " "; 
+                    }
+                    response = server.sendMessageTo(userName, w[1], msg);
                 }
-                else if (decision == 4){
-                    System.out.println(server.showUserItems(gameName,userName));
-                }
-                else if (decision ==  5){
-                    System.out.println(server.showUsers(gameName));
-                }
-                else if (decision == 6){
-                    System.out.print("Enter message: ");
-                    String message = handleInput();
-                    System.out.println(server.showUsers(gameName));
-                    System.out.print("\nEnter recipient: ");
-                    String recipient = handleInput();
-                    System.out.println(server.sendMessageTo(userName, recipient, message));
-                }
-                else if (decision == 0 ){
-                    System.out.println(server.removeUser(gameName,userName,location));
-                    mainMenu(playerName);
-                }
-
-
-                
+            }
+            else if (s.equals("players")) {
+                response = server.showLocationPlayers(gameName, location);
+            }
+            else if (s.equals("items")) {
+                response = server.showLocationItems(gameName, location);
+            }
+            else if (s.equals("inventory")) {
+                response = server.showUserItems(gameName, userName);
+            }
+            else if (s.equals("exit")) {
+                server.removeUser(gameName,userName,location);
+                mainMenu(playerName);
+                break;
+            }
+            else if (s.equals("")) {
+                response = "";
+            }
+            else {
+                response = "Invalid command.";
             }
         }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-    }
-
-    private static int handleGameInput(){
-        System.out.println("\nCommands:");
-        System.out.println("move -> move\npick -> pick up item \ninventory -> show inventory\nplayers -> show players currently in the server" +
-                "\nmessage -> send message to a player\nexit -> exit the game\n[Enter Key] -> view current location\n");
-        System.out.print("Enter command: ");
-        String in = handleInput();
-
-        if (in == null) {
-            System.out.println("Special characters are not allowed.\n");
-            return handleGameInput();
-        }
-
-        if (in.equals("move")){
-            return 1;
-        }
-
-        else if(in.equals("pick")){
-            return 2;
-        }
-
-        else if(in.equals("")){
-            return 3;
-        }
-
-        else if (in.equals("inventory")){
-            return 4;
-        }
-
-        else if (in.equals("players")){
-            return 5;
-        }
-
-        else if (in.equals("message")){
-            return 6;
-        }
-
-        else if(in.equals("exit")){
-            return 0;
-        }
-        
-        else{
-            System.out.println("Invalid input\n");
-            return handleGameInput();
-        }
-    }
-    private static String handleDirection(){
-        try{
-            System.out.println("\nEnter direction: north,east,south,west:\n");
-            // check for special characters
-            Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
-            String in = reader.readLine().trim();
-            Matcher m = p.matcher(in);
-            boolean notvalid = m.find();
-
-            if (in.equals("north") | in.equals("south") | in.equals("west") | in.equals("east")){
-                return in;
-            }
-
-            else if(notvalid){
-                System.out.println("Special characters are not allowed.\n");
-                return handleInput();
-            }
-            else{
-                System.out.println("Invalid input\n");
-                return handleInput();
-            }
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
 
     private static String handleInput(){
@@ -304,21 +241,14 @@ public class MUDClient {
             String in = reader.readLine().trim();
             Matcher m = p.matcher(in);
             boolean notvalid = m.find();
-            
             if (notvalid) {
                 return null;
             }
-
             return in;
         }
         catch(IOException e ){
             e.printStackTrace();
         }
         return null;
-    }
-
-    private static void clear() {
-        System.out.print("\033[H\033[2J");  
-        System.out.flush();
     }
 }

@@ -72,6 +72,16 @@ public class MUDServerImpl implements MUDServerInterface{
         return currentGame.locationInfo(location);
     }
 
+    public String showLocationPlayers(String MUDName, String location) throws RemoteException{
+        MUD currentGame = mudGames.get(MUDName);
+        return currentGame.locationPlayers(location);
+    }
+
+    public String showLocationItems(String MUDName, String location) throws RemoteException{
+        MUD currentGame = mudGames.get(MUDName);
+        return currentGame.locationItems(location);
+    }
+
     public String pickItem(String MUDName, String location, String username,String item) throws RemoteException{
         MUD currentGame = mudGames.get(MUDName);
         if (currentGame.pickItem(location,username,item) ){
@@ -80,15 +90,15 @@ public class MUDServerImpl implements MUDServerInterface{
                 for (User activeUser: currentGame.getUsers()){
                     for (Map.Entry<String, MUDClientInterface> pair : clientCallbacks.entrySet()){
                         if (activeUser.getName().equals(pair.getKey())){
-                            pair.getValue().receiveMessage("\n" + username + " has picked up " + item);
+                            pair.getValue().receiveMessage(username + " has picked up " + item);
 
                         }
                 }
             }
-            return "\nYou have picked up: " + item + "\n";
+            return "You have picked up: " + item;
         }
 
-        else return "\nThere is no " + item + " in your location\n";
+        else return "There is no " + item + " in your location";
     }
 
     public String showUserItems(String MUDName, String user) throws RemoteException{
@@ -100,7 +110,7 @@ public class MUDServerImpl implements MUDServerInterface{
         for (User activeUser : currentGame.getUsers()) {
             for (Map.Entry<String, MUDClientInterface> pair : clientCallbacks.entrySet()) {
                 if (activeUser.getName().equals(pair.getKey())) {
-                    pair.getValue().receiveMessage("\n" + thing + " has moved " + dir + " from " + location + "\n");
+                    pair.getValue().receiveMessage(thing + " has moved " + dir);
 
                 }
 
@@ -110,15 +120,15 @@ public class MUDServerImpl implements MUDServerInterface{
         return currentGame.moveThing(location,dir,thing);
     }
 
-    public String sendMessageTo(String sender, String recipient,String message) throws RemoteException{
-        if ( sender.equals(recipient)) return "Cannot send message to yourself";
+    public String sendMessageTo(String sender, String recipient, String message) throws RemoteException{
+        if ( sender.equals(recipient)) return "You can't send a message to yourself.";
         for (Map.Entry<String ,MUDClientInterface> pair : clientCallbacks.entrySet()){
             if ( pair.getKey().equals(recipient)){
-                pair.getValue().receiveMessage("\nmessage from " + sender + " : " + message + "\n");
-                return "\nMessage sent\n";
+                pair.getValue().receiveMessage(sender + " sent you a message: " + message);
+                return "Message sent.";
             }
         }
-        return "\nRecipient not found\n";
+        return "Recipient not found";
     }
 
 
@@ -144,7 +154,7 @@ public class MUDServerImpl implements MUDServerInterface{
                         for (User activeUser : currentGame.getUsers()) {
                             for (Map.Entry<String, MUDClientInterface> pair : clientCallbacks.entrySet()) {
                                 if (activeUser.getName().equals(pair.getKey())) {
-                                    pair.getValue().receiveMessage("\n" + name + " has entered the server");
+                                    pair.getValue().receiveMessage(name + " has entered the server");
                                 }
                             }
                         }
@@ -168,7 +178,7 @@ public class MUDServerImpl implements MUDServerInterface{
             for (User activeUser : mudGame.getUsers()) {
                 for (Map.Entry<String, MUDClientInterface> pair : clientCallbacks.entrySet()) {
                     if (activeUser.getName().equals(pair.getKey())) {
-                        pair.getValue().receiveMessage("\n" + user + " has left the server");
+                        pair.getValue().receiveMessage(user + " has left the server");
 
                     }
 

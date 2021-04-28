@@ -20,44 +20,48 @@ class Vertex
 				     // (Edge)
     public List<String> _things;     // The things  at
 				     // this location
-	public List<String> _players; //players
+		public List<String> _players; //players
 
     public Vertex( String nm )
     {
-	_name = nm; 
-	_routes = new HashMap<String,Edge>(); // Not synchronised
-	_things = new Vector<String>();       // Synchronised
-	_players = new Vector<String>(); // synchronised
+			_name = nm; 
+			_routes = new HashMap<String,Edge>(); // Not synchronised
+			_things = new Vector<String>();       // Synchronised
+			_players = new Vector<String>(); // synchronised
     }
 
     public String toString()
     {
-	String summary = "\n";
-	summary += _msg + "\n";
-	Iterator iter = _routes.keySet().iterator();
-	String direction;
-	while (iter.hasNext()) {
-	    direction = (String)iter.next();
-	    summary += "To the " + direction + " there is " + ((Edge)_routes.get( direction ))._view + "\n";
-	}
-	iter = _things.iterator();
-	if (iter.hasNext()) {
-		summary += "Things you can see: ";
-		do {
-			summary += iter.next() + " ";
-			} while (iter.hasNext());
-		}
-	return summary;
+			String summary = "\n";
+			summary += _msg + "\n";
+			Iterator iter = _routes.keySet().iterator();
+			String direction;
+			while (iter.hasNext()) {
+					direction = (String)iter.next();
+					summary += "To the " + direction + " there is " + ((Edge)_routes.get( direction ))._view + "\n";
+			}
+			return summary;
     }
 
-    public String showPlayers(){
-    	String summary = "\n";
-    	summary += "Players you can see: ";
+    public String showPlayers() {
+    	String summary = "Players you can see: ";
 			for (String player : _players) 
 			{ 
 				summary += player + " ";
 			}
     	return summary;
-	}
+		}
+
+		public String showItems() {
+			Iterator iter = _things.iterator();
+			String summary = "Things you can see: ";
+			if (iter.hasNext()) {
+				do {
+					summary += iter.next() + " ";
+					} while (iter.hasNext());
+				}
+			return summary;
+		}
+
 }
 
