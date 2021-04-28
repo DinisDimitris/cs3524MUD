@@ -137,6 +137,7 @@ public class MUDClient {
             }
         }
         try {
+            gameJoined = response;
             playGame(response,playerName);
         } 
         catch (IOException e) {
