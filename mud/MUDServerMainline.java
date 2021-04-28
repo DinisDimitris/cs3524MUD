@@ -31,8 +31,8 @@ public class MUDServerMainline {
             MUDServerInterface mudStub = (MUDServerInterface) UnicastRemoteObject.exportObject(mudServer, serverPort);
 
             Naming.rebind(regURL, mudStub);
-            // initialize one mud
-            mudServer.createMUDs(1);
+            // initialize more than one mud
+            mudServer.createMUDs(2);
 
         }
 
