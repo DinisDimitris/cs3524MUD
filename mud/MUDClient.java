@@ -106,7 +106,7 @@ public class MUDClient {
             System.out.print("Enter command: ");
             String s = handleInput();
             if (s == null) {
-                response = "Invalid input - sepcial characters are not allowed.";
+                response = "Invalid input - special characters are not allowed.";
             }
             else if (s.contains(" ")) {
                 String[] w = s.split(" ");
