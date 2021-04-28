@@ -35,7 +35,7 @@ public class MUDServerImpl implements MUDServerInterface{
 
     public Boolean createMUDs(int numberofgames) throws RemoteException {
         if (maxGames < countGames + numberofgames) {
-            System.out.println("Number of games exceed limit");
+            System.out.println("Maximum number of games reached");
             return false;
         }
 
@@ -50,10 +50,10 @@ public class MUDServerImpl implements MUDServerInterface{
 
     public String showUsers(String MUDNamme) throws  RemoteException{
         MUD currentGame = mudGames.get(MUDNamme);
-        String usersToString = "\nPlayers in this mud: \n";
+        String usersToString = "Players in this MUD:";
         ArrayList<User> users = currentGame.getUsers();
         for ( int i = 0 ; i < users.size(); i++){
-            usersToString += "\n->" + users.get(i).getName() + "\n";
+            usersToString += "\n->" + users.get(i).getName();
         }
         return usersToString;
     }
@@ -100,7 +100,7 @@ public class MUDServerImpl implements MUDServerInterface{
         for (User activeUser : currentGame.getUsers()) {
             for (Map.Entry<String, MUDClientInterface> pair : clientCallbacks.entrySet()) {
                 if (activeUser.getName().equals(pair.getKey())) {
-                    pair.getValue().receiveMessage("\n" + thing + " has moved from " + location + " towards" + dir+ "\n");
+                    pair.getValue().receiveMessage("\n" + thing + " has moved " + dir + " from " + location + "\n");
 
                 }
 
@@ -128,10 +128,10 @@ public class MUDServerImpl implements MUDServerInterface{
             s += game + " ";
         }
         if (s.length() > 1){
-            return "Servers available: " + s;
+            return "Games available: " + s;
         }
         // TODO ask user if he wants to create a server
-        else return "No servers available";
+        else return "No games available";
     }
 
     public int addPlayer(String name, String mudInstance) throws RemoteException{

@@ -231,7 +231,7 @@ public class MUD
      */
     public String locationInfo( String loc )
     {
-	return getVertex( loc ).toString() + "\nThings: " + getVertex(loc)._things.toString() + "\n" + getVertex(loc).showPlayers();
+	return getVertex( loc ).toString() + getVertex(loc).showPlayers();
     }
 
     /**

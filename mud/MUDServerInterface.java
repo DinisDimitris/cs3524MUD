@@ -1,7 +1,6 @@
 package mud;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 
 public interface MUDServerInterface extends Remote {
     Boolean intializeGame(String GameName) throws RemoteException;

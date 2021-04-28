@@ -42,19 +42,21 @@ class Vertex
 	}
 	iter = _things.iterator();
 	if (iter.hasNext()) {
-		summary += "Things You can see: ";
+		summary += "Things you can see: ";
 		do {
 			summary += iter.next() + " ";
 			} while (iter.hasNext());
 		}
-	summary += "\n\n";
 	return summary;
     }
 
     public String showPlayers(){
     	String summary = "\n";
     	summary += "Players you can see: ";
-    	summary += _players.toString();
+			for (String player : _players) 
+			{ 
+				summary += player + " ";
+			}
     	return summary;
 	}
 }
